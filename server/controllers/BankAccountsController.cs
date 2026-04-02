@@ -33,6 +33,11 @@ namespace server.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<AccountDTO>> GetAccount(int id)
         {
+            if (id <= 0)
+            {
+                return BadRequest(new { message = "Invalid account ID." });
+            }
+
             var account = await _context.Accounts.FindAsync(id);
 
             if (account == null)
