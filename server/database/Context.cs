@@ -10,5 +10,6 @@ namespace server.database
         {
         }
         public DbSet<Account> Accounts { get; set; } = null!;
+        public DbSet<BankAccount> BankAccounts { get; set; } = null!;
     }
 }

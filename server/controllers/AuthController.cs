@@ -17,13 +17,13 @@ namespace server.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] LoginRequest request)
+        public async Task<IActionResult> Register([FromBody] AccountRegistrationDTO request)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+                if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
                 {
-                    return BadRequest(new { message = "Username and password are required." });
+                    return BadRequest(new { message = "Email and password are required." });
                 }
 
                 if (request.Password.Length < 8)
@@ -31,13 +31,14 @@ namespace server.Controllers
                     return BadRequest(new { message = "Password must be at least 8 characters long." });
                 }
 
-                await _accountService.RegisterAsync(request.Username, request.Password);
+                await _accountService.RegisterAsync(request);
                 return Ok(new { message = "User account created successfully." });
             }
             catch (InvalidOperationException ex)
             {
                 return Conflict(new { message = ex.Message });
             }
+
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "An error occurred during registration.", error = ex.Message });
@@ -45,17 +46,17 @@ namespace server.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] AccountLoginDTO request)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(request.Username) || string.IsNullOrWhiteSpace(request.Password))
+                if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
                 {
-                    return BadRequest(new { message = "Username and password are required." });
+                    return BadRequest(new { message = "Email and password are required." });
                 }
 
-                var token = await _accountService.LoginAsync(request.Username, request.Password);
-                return Ok(new { token, username = request.Username });
+                var token = await _accountService.LoginAsync(request);
+                return Ok(new { token, email = request.Email });
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -73,11 +74,5 @@ namespace server.Controllers
             await _accountService.LogoutAsync();
             return Ok(new { message = "Logged out successfully." });
         }
-    }
-
-    public class LoginRequest
-    {
-        public required string Username { get; set; }
-        public required string Password { get; set; }
     }
 }

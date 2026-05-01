@@ -23,20 +23,20 @@ namespace server.services
             _configuration = configuration;
         }
 
-        public async Task<string> LoginAsync(string username, string password)
+        public async Task<string> LoginAsync(AccountLoginDTO request)
         {
-            // Find account by username
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Name == username);
+            // Find account by email
+            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Email == request.Email);
             if (account == null || string.IsNullOrEmpty(account.PasswordHash))
             {
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                throw new UnauthorizedAccessException("Invalid email or password.");
             }
 
             // Verify password against stored hash
-            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(password, account.PasswordHash);
+            bool isPasswordValid = BCrypt.Net.BCrypt.Verify(request.Password, account.PasswordHash);
             if (!isPasswordValid)
             {
-                throw new UnauthorizedAccessException("Invalid username or password.");
+                throw new UnauthorizedAccessException("Invalid email or password.");
             }
 
             // Generate JWT token
@@ -52,22 +52,23 @@ namespace server.services
             return Task.CompletedTask;
         }
 
-        public async Task RegisterAsync(string username, string password)
+        public async Task RegisterAsync(AccountRegistrationDTO request)
         {
-            if (await _context.Accounts.AnyAsync(a => a.Name == username))
+            if (await _context.Accounts.AnyAsync(a => a.Email == request.Email))
             {
-                throw new InvalidOperationException("Username already exists.");
+                throw new InvalidOperationException("Email already exists.");
             }
 
             // Hash the password using BCrypt
-            string passwordHash = BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
 
             var account = new Account
             {
-                Name = username,
+                Name = request.Email,
                 PasswordHash = passwordHash,
-                AccountType = "Chequeing",
-                Balance = 0m
+                Email = request.Email,
+                Address = request.Address,
+                PhoneNumber = request.PhoneNumber,
             };
 
             _context.Accounts.Add(account);
@@ -85,8 +86,9 @@ namespace server.services
             {
                 Id = account.Id,
                 Name = account.Name,
-                AccountType = account.AccountType,
-                Balance = account.Balance
+                Email = account.Email,
+                Address = account.Address,
+                PhoneNumber = account.PhoneNumber,
             };
             return response;
         }
@@ -106,7 +108,6 @@ namespace server.services
                 new Claim(JwtRegisteredClaimNames.Sub, account.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Name, account.Name),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("accountType", account.AccountType)
             };
 
             var token = new JwtSecurityToken(

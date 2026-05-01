@@ -12,53 +12,53 @@ namespace server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AccountsController : ControllerBase
+    public class BankAccountsController : ControllerBase
     {
         private readonly DatabaseContext _context;
 
-        public AccountsController(DatabaseContext context)
+        public BankAccountsController(DatabaseContext context)
         {
             _context = context;
         }
 
-        // GET: api/Accounts
+        // GET: api/BankAccounts
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AccountDTO>>> GetAccounts()
+        public async Task<ActionResult<IEnumerable<BankAccountDTO>>> GetBankAccounts(int userID)
         {
-            var accounts = await _context.Accounts.ToListAsync();
-            return accounts.Select(ItemToDTO).ToList();
+            var BankAccounts = await _context.BankAccounts.Where(a => a.AccountId == userID).ToListAsync();
+            return BankAccounts.Select(ItemToDTO).ToList();
         }
 
-        // GET: api/Accounts/5
+        // GET: api/BankAccounts/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<AccountDTO>> GetAccount(int id)
+        public async Task<ActionResult<BankAccountDTO>> GetBankAccount(int id)
         {
             if (id <= 0)
             {
                 return BadRequest(new { message = "Invalid account ID." });
             }
 
-            var account = await _context.Accounts.FindAsync(id);
+            var BankAccount = await _context.BankAccounts.FindAsync(id);
 
-            if (account == null)
+            if (BankAccount == null)
             {
                 return NotFound();
             }
 
-            return ItemToDTO(account);
+            return ItemToDTO(BankAccount);
         }
 
-        // PUT: api/Accounts/5
+        // PUT: api/BankAccounts/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAccount(int id, AccountDTO accountDTO)
+        public async Task<IActionResult> PutBankAccount(int id, BankAccountDTO BankaccountDTO)
         {
-            if (id != accountDTO.Id)
+            if (id != BankaccountDTO.Id)
             {
                 return BadRequest();
             }
 
-            _context.Entry(accountDTO).State = EntityState.Modified;
+            _context.Entry(BankaccountDTO).State = EntityState.Modified;
 
             try
             {
@@ -66,7 +66,7 @@ namespace server.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!AccountExists(id))
+                if (!BankAccountExists(id))
                 {
                     return NotFound();
                 }
@@ -82,48 +82,46 @@ namespace server.Controllers
         // POST: api/Accounts
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<AccountDTO>> PostAccount(AccountDTO accountDTO)
+        public async Task<ActionResult<BankAccountDTO>> PostBankAccount(BankAccountDTO BankaccountDTO)
         {
-            var account = new Account
+            var BankAccount = new BankAccount
             {
-                Name = accountDTO.Name,
-                AccountType = accountDTO.AccountType,
-                Balance = accountDTO.Balance
+                AccountType = BankaccountDTO.AccountType,
+                Balance = BankaccountDTO.Balance
             };
-            _context.Accounts.Add(account);
+            _context.BankAccounts.Add(BankAccount);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetAccount", new { id = account.Id }, account);
+            return CreatedAtAction("GetBankAccount", new { id = BankAccount.Id }, ItemToDTO(BankAccount));
         }
 
         // DELETE: api/Accounts/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteAccount(int id)
+        public async Task<IActionResult> DeleteBankAccount(int id)
         {
-            var account = await _context.Accounts.FindAsync(id);
-            if (account == null)
+            var BankAccount = await _context.BankAccounts.FindAsync(id);
+            if (BankAccount == null)
             {
                 return NotFound();
             }
 
-            _context.Accounts.Remove(account);
+            _context.BankAccounts.Remove(BankAccount);
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool AccountExists(int id)
+        private bool BankAccountExists(int id)
         {
-            return _context.Accounts.Any(e => e.Id == id);
+            return _context.BankAccounts.Any(e => e.Id == id);
         }
 
-        private static AccountDTO ItemToDTO(Account Account) =>
-            new AccountDTO
+        private static BankAccountDTO ItemToDTO(BankAccount BankAccount) =>
+            new BankAccountDTO
             {
-                Id = Account.Id,
-                Name = Account.Name,
-                AccountType = Account.AccountType,
-                Balance = Account.Balance
+                Id = BankAccount.Id,
+                AccountType = BankAccount.AccountType,
+                Balance = BankAccount.Balance
             };
     }
 }
